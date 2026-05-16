@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>UnderRubbl Survival OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --amber: #FF9500;
+    --amber-dim: #b36900;
+    --amber-glow: rgba(255,149,0,0.3);
+    --red: #FF3B30;
+    --red-dim: #8b1f19;
+    --red-glow: rgba(255,59,48,0.3);
+    --green: #30D158;
+    --blue: #0A84FF;
+    --bg: #000000;
+    --surface: #0a0a0a;
+    --surface2: #111111;
+    --surface3: #1a1a1a;
+    --border: rgba(255,149,0,0.15);
+    --text: #e8e0d0;
+    --text-dim: #7a7060;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-display: 'Orbitron', sans-serif;
+    --font-body: 'Exo 2', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 9999;
+  }
+  .tactical-box {
+    position: relative;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .tactical-box::before, .tactical-box::after {
+    content: '';
+    position: absolute;
+    width: 12px; height: 12px;
+    border-color: var(--amber);
+    border-style: solid;
+  }
+  .tactical-box::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+  .tactical-box::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+  .font-mono { font-family: var(--font-mono); }
+  .font-display { font-family: var(--font-display); }
+  .nav-tab {
+    font-family: var(--font-display);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    padding: 10px 6px 8px;
+    color: var(--text-dim);
+    border-top: 2px solid transparent;
+    transition: all 0.2s;
+    cursor: pointer;
+    flex: 1;
+    text-align: center;
+    user-select: none;
+    background: none;
+    border-left: none; border-right: none; border-bottom: none;
+  }
+  .nav-tab.active {
+    color: var(--amber);
+    border-top-color: var(--amber);
+    background: rgba(255,149,0,0.05);
+  }
+  .nav-tab svg { margin: 0 auto 4px; display: block; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .sos-btn {
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    border: 3px solid var(--red);
+    background: radial-gradient(circle, rgba(255,59,48,0.15) 0%, rgba(255,59,48,0.03) 70%);
+    color: var(--red);
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(255,59,48,0.2), inset 0 0 30px rgba(255,59,48,0.05);
+  }
+  .sos-btn:active { transform: scale(0.95); }
+  .sos-btn.active {
+    background: radial-gradient(circle, rgba(255,59,48,0.3) 0%, rgba(255,59,48,0.1) 70%);
+    box-shadow: 0 0 40px rgba(255,59,48,0.5), 0 0 80px rgba(255,59,48,0.2), inset 0 0 30px rgba(255,59,48,0.1);
+  }
+  .pulse-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid var(--red);
+    opacity: 0;
+    animation: none;
+  }
+  .sos-btn.active .pulse-ring:nth-child(1) { width: 180px; height: 180px; animation: pulseOut 2s ease-out infinite 0s; }
+  .sos-btn.active .pulse-ring:nth-child(2) { width: 210px; height: 210px; animation: pulseOut 2s ease-out infinite 0.5s; }
+  .sos-btn.active .pulse-ring:nth-child(3) { width: 240px; height: 240px; animation: pulseOut 2s ease-out infinite 1s; }
+  @keyframes pulseOut { 0% { transform: scale(0.85); opacity: 0.8; } 100% { transform: scale(1); opacity: 0; } }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  .blink { animation: blink 1s step-end infinite; }
+  .text-amber { color: var(--amber); }
+  .text-red { color: var(--red); }
+  .text-green { color: var(--green); }
+  .battery-bar {
+    height: 8px;
+    background: var(--surface3);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .battery-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease, background 0.5s;
+  }
+  #chat-messages {
+    height: 280px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--amber-dim) transparent;
+  }
+  #chat-messages::-webkit-scrollbar { width: 4px; }
+  #chat-messages::-webkit-scrollbar-thumb { background: var(--amber-dim); border-radius: 2px; }
+  .chat-bubble {
+    max-width: 85%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 10px;
+    animation: fadeUp 0.3s ease;
+  }
+  .chat-bubble.ai {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+    color: var(--text);
+  }
+  .chat-bubble.user {
+    background: rgba(255,149,0,0.12);
+    border: 1px solid rgba(255,149,0,0.25);
+    border-bottom-right-radius: 4px;
+    color: var(--amber);
+    margin-left: auto;
+  }
+  .typing-indicator span {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    margin: 0 2px;
+    animation: bounce 1.2s infinite;
+  }
+  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  #breath-circle {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    border: 2px solid var(--amber);
+    background: radial-gradient(circle, rgba(255,149,0,0.1), transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 10px;
+    color: var(--amber);
+    letter-spacing: 0.05em;
+    text-align: center;
+    transition: transform 0.5s ease;
+    flex-shrink: 0;
+  }
+  #breath-circle.inhale { transform: scale(1.4); }
+  #breath-circle.hold   { transform: scale(1.4); }
+  #breath-circle.exhale { transform: scale(1); }
+  .alert-card {
+    border-left: 3px solid var(--red);
+    background: rgba(255,59,48,0.05);
+    padding: 10px 14px;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 10px;
+    animation: fadeUp 0.4s ease;
+  }
+  .alert-card.moderate { border-left-color: var(--amber); background: rgba(255,149,0,0.05); }
+  .alert-card.safe { border-left-color: var(--green); background: rgba(48,209,88,0.05); }
+  .tactical-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: 10px 14px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .tactical-input:focus { border-color: var(--amber); box-shadow: 0 0 0 2px var(--amber-glow); }
+  .tactical-input::placeholder { color: var(--text-dim); }
+  select.tactical-input option { background: #111; }
+  .btn-amber {
+    background: transparent;
+    border: 1px solid var(--amber);
+    color: var(--amber);
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+  .btn-amber:hover, .btn-amber:active { background: rgba(255,149,0,0.1); }
+  .btn-red {
+    background: rgba(255,59,48,0.1);
+    border: 1px solid var(--red);
+    color: var(--red);
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+  .btn-red:active { background: rgba(255,59,48,0.25); }
+  /* ── FIXED: btn-red hover state for visibility ── */
+  .btn-red:hover { background: rgba(255,59,48,0.2); box-shadow: 0 0 12px rgba(255,59,48,0.3); }
+  .signal-bar { width: 6px; background: var(--surface3); border-radius: 2px; transition: background 0.5s; }
+  .signal-bar.active { background: var(--green); }
+  #waveform { display: flex; align-items: center; gap: 3px; height: 40px; }
+  .wave-bar { width: 4px; background: var(--amber); border-radius: 2px; transition: height 0.1s; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .status-dot.ok     { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .status-dot.warn   { background: var(--amber); box-shadow: 0 0 6px var(--amber); animation: blink 1s infinite; }
+  .status-dot.danger { background: var(--red);   box-shadow: 0 0 6px var(--red);   animation: blink 0.5s infinite; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--amber-dim); border-radius: 2px; }
+  .section-header {
+    font-family: var(--font-display);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-header::after { content:''; flex:1; height:1px; background: var(--border); }
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(255,149,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,149,0,0.03) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+  .quick-action {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 12px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    font-family: var(--font-body);
+  }
+  .quick-action:hover, .quick-action:active { border-color: var(--amber); color: var(--amber); background: rgba(255,149,0,0.05); }
+  #onboard-overlay {
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(0,0,0,0.97);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  @keyframes glitch {
+    0%,100% { text-shadow: 2px 0 var(--red), -2px 0 var(--blue); }
+    25% { text-shadow: -2px 0 var(--red), 2px 0 var(--blue); }
+    50% { text-shadow: 2px 2px var(--red), -2px -2px var(--blue); }
+    75% { text-shadow: -2px 2px var(--amber), 2px -2px var(--blue); }
+  }
+  .glitch { animation: glitch 3s infinite; }
+  .tag { font-family: var(--font-mono); font-size: 10px; padding: 2px 6px; border-radius: 3px; letter-spacing: 0.05em; }
+  .tag-red   { background: rgba(255,59,48,0.15); color: var(--red);   border: 1px solid rgba(255,59,48,0.3); }
+  .tag-amber { background: rgba(255,149,0,0.15); color: var(--amber); border: 1px solid rgba(255,149,0,0.3); }
+  .tag-green { background: rgba(48,209,88,0.15); color: var(--green); border: 1px solid rgba(48,209,88,0.3); }
+  @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+  .shimmer {
+    background: linear-gradient(90deg, var(--surface2) 25%, var(--surface3) 50%, var(--surface2) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+  }
+  *:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; border-radius: 4px; }
+
+  .api-key-box {
+    background: rgba(255,149,0,0.06);
+    border: 1px solid rgba(255,149,0,0.4);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .api-key-box::before {
+    content: '🔑 OPENAI KEY';
+    font-family: var(--font-display);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--amber);
+    display: block;
+    margin-bottom: 10px;
+  }
+  .api-key-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .api-key-input-row input {
+    flex: 1;
+    background: #000;
+    border: 1px solid rgba(255,149,0,0.5);
+    border-radius: 8px;
+    color: var(--amber);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .api-key-input-row input:focus {
+    border-color: var(--amber);
+    box-shadow: 0 0 0 3px var(--amber-glow);
+  }
+  .api-key-input-row input::placeholder { color: #4a3f2a; }
+  .btn-save-key {
+    background: var(--amber);
+    border: none;
+    color: #000;
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .btn-save-key:hover { background: #ffaa22; }
+  .key-status-banner {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+  }
+  .key-status-banner.saved {
+    background: rgba(48,209,88,0.1);
+    border: 1px solid rgba(48,209,88,0.3);
+    color: var(--green);
+  }
+  .key-status-banner.empty {
+    background: rgba(255,149,0,0.05);
+    border: 1px solid rgba(255,149,0,0.2);
+    color: var(--text-dim);
+  }
+  .key-status-banner.error {
+    background: rgba(255,59,48,0.08);
+    border: 1px solid rgba(255,59,48,0.3);
+    color: var(--red);
+  }
+
+  /* ══ DEAD MAN'S SWITCH OVERLAY — FIXED ══ */
+  #dms-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    background: rgba(0,0,0,0.98);
+    /* Changed: use visibility+opacity instead of display:none so transition works,
+       but keep display:flex always so flexbox centering works */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    text-align: center;
+    /* Hidden by default via pointer-events + opacity */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  #dms-overlay.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+  @keyframes dmsPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(255,59,48,0.7); }
+    50%      { box-shadow: 0 0 0 30px rgba(255,59,48,0); }
+  }
+  .dms-ring {
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    border: 3px solid var(--red);
+    display: flex; align-items: center; justify-content: center;
+    animation: dmsPulse 1s ease infinite;
+    margin-bottom: 24px;
+  }
+  #dms-countdown {
+    font-family: var(--font-display);
+    font-size: 64px;
+    font-weight: 900;
+    color: var(--red);
+    line-height: 1;
+  }
+  .toggle-switch {
+    width: 44px; height: 24px;
+    background: var(--surface3);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  .toggle-switch.on { background: var(--amber); }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--text);
+    top: 2px; left: 2px;
+    transition: left 0.3s;
+  }
+  .toggle-switch.on::after { left: 22px; }
+  .battery-big-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 180px;
+    height: 180px;
+  }
+  .battery-big-wrap svg { transform: rotate(-90deg); }
+  .battery-ring-bg { fill: none; stroke: var(--surface3); stroke-width: 10; }
+  .battery-ring-fill { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s ease, stroke 0.5s; }
+  .battery-big-text {
+    position: absolute;
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--amber);
+    text-align: center;
+    line-height: 1;
+  }
+  .dms-sys-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--surface3);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+  .dms-sys-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--amber);
+    transition: width 1s linear;
+  }
+
+  /* ── DMS Test button — extra prominent ── */
+  #dms-test-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 14px 20px;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    background: rgba(255,59,48,0.12);
+    border: 1px solid var(--red);
+    color: var(--red);
+    font-family: var(--font-display);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+  }
+  #dms-test-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,59,48,0.15), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.4s ease;
+  }
+  #dms-test-btn:hover { background: rgba(255,59,48,0.22); box-shadow: 0 0 16px rgba(255,59,48,0.35); }
+  #dms-test-btn:hover::before { transform: translateX(100%); }
+  #dms-test-btn:active { transform: scale(0.98); background: rgba(255,59,48,0.3); }
+</style>
+</head>
+<body class="grid-bg">
+
+<!-- ══ DEAD MAN'S SWITCH OVERLAY — FIXED ══ -->
+<div id="dms-overlay" role="alertdialog" aria-modal="true" aria-labelledby="dms-title">
+  <div class="dms-ring">
+    <div id="dms-countdown">10</div>
+  </div>
+  <h2 id="dms-title" style="font-family:var(--font-display);font-size:18px;color:var(--red);letter-spacing:0.15em;margin-bottom:12px;">⚠ DEAD MAN'S SWITCH</h2>
+  <p style="font-family:var(--font-mono);font-size:12px;color:var(--text-dim);margin-bottom:8px;">No activity detected for <span id="dms-timeout-display">10</span> minutes.</p>
+  <p style="font-family:var(--font-mono);font-size:11px;color:#555;margin-bottom:28px;">SOS beacon + emergency call will activate automatically.</p>
+  <button id="dms-cancel-btn" style="background:var(--red);border:none;color:#fff;font-family:var(--font-display);font-size:14px;letter-spacing:0.1em;padding:18px 40px;border-radius:8px;cursor:pointer;width:100%;max-width:320px;box-shadow:0 0 30px rgba(255,59,48,0.4);">✋ I'M ALIVE — CANCEL</button>
+  <p style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);margin-top:16px;" id="dms-sms-status"></p>
+</div>
+
+<!-- Onboarding Overlay -->
+<div id="onboard-overlay">
+  <div style="max-width:380px;width:100%;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="font-family:var(--font-display);font-size:11px;letter-spacing:0.3em;color:var(--red);margin-bottom:12px;" class="blink">▶ SYSTEM INITIALIZING</div>
+      <h1 style="font-family:var(--font-display);font-size:28px;font-weight:900;color:var(--amber);letter-spacing:0.05em;" class="glitch">UNDERRUBBL</h1>
+      <div style="font-family:var(--font-display);font-size:10px;letter-spacing:0.3em;color:var(--text-dim);margin-top:4px;">SURVIVAL OS v2.5</div>
+      <div style="width:60px;height:1px;background:var(--amber);margin:16px auto;opacity:0.4;"></div>
+      <p style="font-size:13px;color:var(--text-dim);line-height:1.6;">Critical medical information. First responders will use this data.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;">
+      <div>
+        <label style="font-family:var(--font-display);font-size:9px;letter-spacing:0.15em;color:var(--text-dim);display:block;margin-bottom:6px;">SURVIVOR NAME</label>
+        <input id="setup-name" class="tactical-input" type="text" placeholder="Full name" autocomplete="name">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label style="font-family:var(--font-display);font-size:9px;letter-spacing:0.15em;color:var(--text-dim);display:block;margin-bottom:6px;">BLOOD TYPE</label>
+          <select id="setup-blood" class="tactical-input">
+            <option value="">Select</option>
+            <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+            <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+            <option>Unknown</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-family:var(--font-display);font-size:9px;letter-spacing:0.15em;color:var(--text-dim);display:block;margin-bottom:6px;">AGE</label>
+          <input id="setup-age" class="tactical-input" type="number" placeholder="Years" min="1" max="120">
+        </div>
+      </div>
+      <div>
+        <label style="font-family:var(--font-display);font-size:9px;letter-spacing:0.15em;color:var(--text-dim);display:block;margin-bottom:6px;">ALLERGIES / CONDITIONS</label>
+        <input id="setup-allergies" class="tactical-input" type="text" placeholder="e.g. Penicillin, Diabetes">
+      </div>
+      <div>
+        <label style="font-family:var(--font-display);font-size:9px;letter-spacing:0.15em;color:var(--text-dim);display:block;margin-bottom:6px;">MEDICATIONS</label>
+        <input id="setup-meds" class="tactical-input" type="text" placeholder="Current medications">
+      </div>
+    </div>
+    <button onclick="initApp()" class="btn-amber" style="width:100%;padding:16px;font-size:13px;border-radius:8px;background:rgba(255,149,0,0.08);">
+      ⚡ ACTIVATE SURVIVAL OS
+    </button>
+    <p style="text-align:center;font-size:11px;color:var(--text-dim);margin-top:12px;">All data stored locally on device only.</p>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="app" style="display:none;max-width:1120px;margin:0 auto;min-height:100dvh;flex-direction:column;">
+
+  <!-- Header -->
+  <header style="padding:12px 16px 8px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(0,0,0,0.95);backdrop-filter:blur(10px);z-index:100;">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-family:var(--font-display);font-size:14px;font-weight:900;color:var(--amber);letter-spacing:0.08em;">UNDERRUBBL</div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.1em;">SURVIVAL OS</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="display:flex;align-items:flex-end;gap:2px;height:16px;">
+          <div class="signal-bar" id="sig1" style="height:4px;"></div>
+          <div class="signal-bar" id="sig2" style="height:7px;"></div>
+          <div class="signal-bar" id="sig3" style="height:10px;"></div>
+          <div class="signal-bar" id="sig4" style="height:13px;"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;">
+          <div style="width:24px;height:11px;border:1px solid var(--text-dim);border-radius:2px;position:relative;padding:1px;">
+            <div style="position:absolute;right:-4px;top:3px;width:3px;height:5px;background:var(--text-dim);border-radius:0 1px 1px 0;"></div>
+            <div id="battery-mini" style="height:100%;border-radius:1px;background:var(--green);width:72%;transition:width 0.5s,background 0.5s;"></div>
+          </div>
+          <span id="battery-pct" style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);">--%</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <div class="status-dot ok" id="sys-status"></div>
+          <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);" id="sys-status-txt">ONLINE</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main style="flex:1;overflow-y:auto;padding:20px 16px;max-width:1120px;margin:0 auto;" id="main-content">
+
+    <!-- HOME -->
+    <div class="panel active" id="panel-home">
+      <div class="tactical-box" style="padding:24px 16px;margin-bottom:16px;text-align:center;border-radius:8px;">
+        <div class="section-header">ACOUSTIC SOS BEACON</div>
+        <div style="position:relative;display:flex;justify-content:center;margin:20px 0 24px;">
+          <button class="sos-btn" id="sos-btn" onclick="toggleSOS()" aria-pressed="false" aria-label="Toggle SOS acoustic beacon">
+            <div class="pulse-ring"></div><div class="pulse-ring"></div><div class="pulse-ring"></div>
+            <div>SOS</div>
+            <div style="font-size:10px;font-weight:400;letter-spacing:0.1em;margin-top:4px;" id="sos-label">TAP TO ARM</div>
+          </button>
+        </div>
+        <div id="waveform" style="justify-content:center;margin-bottom:16px;">
+          <div class="wave-bar" style="height:4px;" id="wb0"></div><div class="wave-bar" style="height:4px;" id="wb1"></div>
+          <div class="wave-bar" style="height:4px;" id="wb2"></div><div class="wave-bar" style="height:4px;" id="wb3"></div>
+          <div class="wave-bar" style="height:4px;" id="wb4"></div><div class="wave-bar" style="height:4px;" id="wb5"></div>
+          <div class="wave-bar" style="height:4px;" id="wb6"></div><div class="wave-bar" style="height:4px;" id="wb7"></div>
+          <div class="wave-bar" style="height:4px;" id="wb8"></div><div class="wave-bar" style="height:4px;" id="wb9"></div>
+          <div class="wave-bar" style="height:4px;" id="wb10"></div><div class="wave-bar" style="height:4px;" id="wb11"></div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);line-height:1.8;">
+          <span id="beacon-freq">FREQ: 4000 Hz</span> &nbsp;|&nbsp;
+          <span id="beacon-mode">MODE: STANDBY</span><br>
+          <span id="beacon-pattern">PATTERN: S·O·S (International Distress)</span>
+        </div>
+      </div>
+
+      <div class="tactical-box" style="padding:16px;margin-bottom:16px;border-radius:8px;">
+        <div class="section-header">MEDICAL ID — FIRST RESPONDER DATA</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-bottom:3px;">SURVIVOR</div>
+            <div style="font-family:var(--font-display);font-size:15px;color:var(--amber);font-weight:700;" id="med-name">—</div>
+          </div>
+          <div>
+            <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-bottom:3px;">BLOOD TYPE</div>
+            <div style="font-family:var(--font-display);font-size:22px;color:var(--red);font-weight:900;" id="med-blood">—</div>
+          </div>
+          <div>
+            <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-bottom:3px;">AGE</div>
+            <div style="font-size:14px;color:var(--text);" id="med-age">—</div>
+          </div>
+          <div>
+            <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-bottom:3px;">MEDICATIONS</div>
+            <div style="font-size:12px;color:var(--text);" id="med-meds">None reported</div>
+          </div>
+          <div style="grid-column:1/-1;">
+            <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-bottom:3px;">⚠ ALLERGIES / CONDITIONS</div>
+            <div style="font-size:13px;color:var(--red);font-weight:600;" id="med-allergies">None reported</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-header">QUICK ACTIONS</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+        <button class="quick-action" onclick="switchTab('ai');sendQuickMsg('I need help staying calm')">🧠 Stay Calm</button>
+        <button class="quick-action" onclick="switchTab('ai');sendQuickMsg('Guide me through box breathing')">🌬 Box Breathing</button>
+        <button class="quick-action" onclick="switchTab('hazard')">⚡ Check Hazards</button>
+        <button class="quick-action" onclick="switchTab('ai');sendQuickMsg('I think I am injured, what should I do?')">🩹 Injury Help</button>
+        <button class="quick-action" onclick="switchTab('ai');sendQuickMsg('How do I signal for help without sound?')">📍 Signal Help</button>
+        <button class="quick-action" onclick="switchTab('ai');sendQuickMsg('I feel like I am going to panic')">💊 Panic Attack</button>
+      </div>
+    </div>
+
+    <!-- AI PSYCHOLOGIST -->
+    <div class="panel" id="panel-ai">
+      <div class="tactical-box" style="padding:16px;margin-bottom:12px;border-radius:8px;">
+        <div class="section-header">AI CRISIS PSYCHOLOGIST</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+          <div style="width:40px;height:40px;border-radius:50%;border:2px solid var(--amber);background:radial-gradient(circle,rgba(255,149,0,0.2),transparent);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🧠</div>
+          <div>
+            <div style="font-family:var(--font-display);font-size:12px;color:var(--amber);font-weight:700;">DR. ARIA</div>
+            <div style="font-family:var(--font-mono);font-size:9px;" id="aria-online-status"><span style="color:var(--green);">● ONLINE</span> — Trauma-Informed AI</div>
+          </div>
+          <div style="margin-left:auto;">
+            <button onclick="startBreathingExercise()" class="btn-amber" style="font-size:9px;padding:6px 10px;">🌬 BREATHE</button>
+          </div>
+        </div>
+
+        <div id="breath-widget" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px;text-align:center;">
+          <div style="font-family:var(--font-display);font-size:10px;letter-spacing:0.2em;color:var(--text-dim);margin-bottom:12px;">BOX BREATHING PROTOCOL</div>
+          <div style="display:flex;align-items:center;gap:16px;justify-content:center;">
+            <div id="breath-circle"><span id="breath-label">START</span></div>
+            <div style="text-align:left;">
+              <div style="font-family:var(--font-mono);font-size:12px;color:var(--amber);" id="breath-phase">Ready</div>
+              <div style="font-family:var(--font-mono);font-size:28px;font-weight:700;color:var(--text);" id="breath-count">4</div>
+              <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);">SECONDS</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;">
+            <button onclick="toggleBreathing()" class="btn-amber" style="font-size:10px;" id="breath-toggle-btn">▶ START</button>
+            <button onclick="document.getElementById('breath-widget').style.display='none';" class="btn-amber" style="font-size:10px;">✕ CLOSE</button>
+          </div>
+        </div>
+
+        <div id="chat-messages" style="padding:4px 0;margin-bottom:12px;" role="log" aria-live="polite"></div>
+
+        <div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;padding-bottom:4px;">
+          <button class="quick-action" style="font-size:11px;padding:6px 12px;" onclick="sendQuickMsg('I am scared and panicking')">😰 Panicking</button>
+          <button class="quick-action" style="font-size:11px;padding:6px 12px;" onclick="sendQuickMsg('I am in pain')">🩹 In pain</button>
+          <button class="quick-action" style="font-size:11px;padding:6px 12px;" onclick="sendQuickMsg('I feel hopeless')">💔 Hopeless</button>
+          <button class="quick-action" style="font-size:11px;padding:6px 12px;" onclick="sendQuickMsg('How long can a person survive without water?')">💧 Survival tips</button>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="chat-input" class="tactical-input" type="text" placeholder="Type or speak..."
+            onkeydown="if(event.key==='Enter')sendChat()">
+          <button id="voice-btn" onclick="toggleVoiceInput()" class="btn-amber"
+            style="padding:10px 13px;flex-shrink:0;font-size:16px;" aria-label="Voice input">🎤</button>
+          <button onclick="sendChat()" class="btn-amber" style="padding:10px 14px;flex-shrink:0;">▶</button>
+        </div>
+
+        <div id="voice-status-bar" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(255,149,0,0.08);border:1px solid rgba(255,149,0,0.25);border-radius:8px;align-items:center;gap:10px;">
+          <div style="display:flex;gap:3px;align-items:center;">
+            <div class="wave-bar" style="height:6px;background:var(--amber);width:3px;" id="vw0"></div>
+            <div class="wave-bar" style="height:6px;background:var(--amber);width:3px;" id="vw1"></div>
+            <div class="wave-bar" style="height:6px;background:var(--amber);width:3px;" id="vw2"></div>
+            <div class="wave-bar" style="height:6px;background:var(--amber);width:3px;" id="vw3"></div>
+            <div class="wave-bar" style="height:6px;background:var(--amber);width:3px;" id="vw4"></div>
+          </div>
+          <span style="font-family:var(--font-mono);font-size:10px;color:var(--amber);" id="voice-status-txt">LISTENING...</span>
+          <button onclick="stopVoiceInput()" style="margin-left:auto;background:none;border:1px solid var(--red);color:var(--red);font-family:var(--font-display);font-size:9px;padding:4px 8px;border-radius:4px;cursor:pointer;">✕ STOP</button>
+        </div>
+
+        <div id="ai-loading" style="display:none;padding:10px 0;">
+          <div class="chat-bubble ai" style="display:inline-flex;align-items:center;gap:8px;">
+            <div class="typing-indicator"><span></span><span></span><span></span></div>
+            <span style="font-size:12px;color:var(--text-dim);">Dr. Aria is responding...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tactical-box" style="padding:14px;border-radius:8px;">
+        <div class="section-header">IMMEDIATE COPING PROTOCOLS</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="background:var(--surface2);padding:10px;border-radius:6px;border:1px solid var(--border);">
+            <div style="font-family:var(--font-display);font-size:10px;color:var(--amber);letter-spacing:0.1em;margin-bottom:4px;">5-4-3-2-1 GROUNDING</div>
+            <div style="font-size:12px;color:var(--text-dim);line-height:1.6;">Name 5 things you see, 4 you can touch, 3 you hear, 2 you smell, 1 you taste.</div>
+          </div>
+          <div style="background:var(--surface2);padding:10px;border-radius:6px;border:1px solid var(--border);">
+            <div style="font-family:var(--font-display);font-size:10px;color:var(--amber);letter-spacing:0.1em;margin-bottom:4px;">TAPPING PROTOCOL</div>
+            <div style="font-size:12px;color:var(--text-dim);line-height:1.6;">Tap your collarbone repeatedly while breathing slowly. Activates parasympathetic nervous system.</div>
+          </div>
+          <div style="background:var(--surface2);padding:10px;border-radius:6px;border:1px solid var(--border);">
+            <div style="font-family:var(--font-display);font-size:10px;color:var(--amber);letter-spacing:0.1em;margin-bottom:4px;">CONSERVE ENERGY</div>
+            <div style="font-size:12px;color:var(--text-dim);line-height:1.6;">Do not shout or move unnecessarily. Panic burns 3x more oxygen. Signal only when you hear rescuers.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HAZARD MONITORING -->
+    <div class="panel" id="panel-hazard">
+      <div id="hazard-banner" style="background:rgba(255,59,48,0.1);border:1px solid rgba(255,59,48,0.3);border-radius:8px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+        <div class="status-dot danger"></div>
+        <div>
+          <div style="font-family:var(--font-display);font-size:11px;color:var(--red);letter-spacing:0.1em;">ACTIVE DISASTER ZONE</div>
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);" id="hazard-time">Monitoring since: --:--</div>
+        </div>
+        <button onclick="refreshHazards()" class="btn-amber" style="margin-left:auto;font-size:9px;padding:6px 10px;">⟳ REFRESH</button>
+      </div>
+      <div class="tactical-box" style="padding:14px;margin-bottom:12px;border-radius:8px;">
+        <div class="section-header">SEISMIC ACTIVITY — USGS FEED</div>
+        <div id="quake-list">
+          <div class="shimmer" style="height:60px;margin-bottom:8px;"></div>
+          <div class="shimmer" style="height:60px;margin-bottom:8px;"></div>
+          <div class="shimmer" style="height:60px;"></div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-top:8px;text-align:right;" id="quake-updated">Last updated: fetching...</div>
+      </div>
+      <div class="tactical-box" style="padding:14px;margin-bottom:12px;border-radius:8px;">
+        <div class="section-header">WEATHER THREAT MATRIX</div>
+        <div id="weather-list">
+          <div class="shimmer" style="height:60px;margin-bottom:8px;"></div>
+          <div class="shimmer" style="height:60px;"></div>
+        </div>
+      </div>
+      <div class="tactical-box" style="padding:14px;border-radius:8px;">
+        <div class="section-header">AFTERSHOCK PROTOCOL</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--text-dim);line-height:1.7;">
+          <div>⚠️ <strong style="color:var(--amber);">During shaking:</strong> Cover head, protect airway from dust</div>
+          <div>⚠️ <strong style="color:var(--amber);">After shaking:</strong> Check for new injuries, check for gas smell</div>
+          <div>⚠️ <strong style="color:var(--amber);">DO NOT:</strong> Use open flame, cause vibrations, move unless immediate threat</div>
+          <div>✅ <strong style="color:var(--green);">DO:</strong> Tap pipe rhythmically, whistle if able, conserve phone battery</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SYSTEMS -->
+    <div class="panel" id="panel-sys">
+
+      <!-- BATTERY -->
+      <div class="tactical-box" style="padding:16px;margin-bottom:16px;border-radius:8px;">
+        <div class="section-header">POWER STATUS</div>
+        <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px;">
+          <div class="battery-big-wrap">
+            <svg width="180" height="180" viewBox="0 0 180 180">
+              <circle class="battery-ring-bg" cx="90" cy="90" r="75"/>
+              <circle class="battery-ring-fill" id="battery-ring" cx="90" cy="90" r="75"
+                stroke="var(--green)" stroke-dasharray="471.24" stroke-dashoffset="471.24"/>
+            </svg>
+            <div style="position:absolute;text-align:center;">
+              <div class="battery-big-text" id="battery-large">--%</div>
+              <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.1em;margin-top:4px;" id="battery-state">CHECKING...</div>
+            </div>
+          </div>
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);margin-top:6px;" id="battery-estimate"></div>
+        </div>
+        <div class="battery-bar" style="margin-bottom:16px;">
+          <div class="battery-fill" id="battery-fill-main" style="width:0%;background:var(--green);"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+          <div style="background:var(--surface2);padding:10px;border-radius:6px;border:1px solid var(--border);">
+            <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-bottom:4px;">CHARGING</div>
+            <div style="font-size:14px;font-weight:600;" id="battery-charging-txt">—</div>
+          </div>
+          <div style="background:var(--surface2);padding:10px;border-radius:6px;border:1px solid var(--border);">
+            <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-bottom:4px;">EST. RUNTIME</div>
+            <div style="font-size:14px;font-weight:600;color:var(--amber);" id="battery-runtime">—</div>
+          </div>
+        </div>
+        <div class="section-header">CONSERVATION MODE</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--text-dim);line-height:1.7;">
+          <div>📵 <strong style="color:var(--amber);">≤50%:</strong> Reduce screen brightness to minimum</div>
+          <div>📵 <strong style="color:var(--amber);">≤30%:</strong> Disable all non-essential apps</div>
+          <div>📵 <strong style="color:var(--amber);">≤15%:</strong> Emergency mode — SOS beacon only</div>
+          <div>📵 <strong style="color:var(--amber);">≤5%:</strong> Write Medical ID on skin with available marker</div>
+        </div>
+      </div>
+
+      <!-- DEAD MAN'S SWITCH -->
+      <div class="tactical-box" style="padding:16px;margin-bottom:16px;border-radius:8px;">
+        <div class="section-header">AUTO-SOS — DEAD MAN'S SWITCH</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="status-dot" id="dms-dot" style="background:var(--green);box-shadow:0 0 6px var(--green);"></div>
+            <div>
+              <div style="font-family:var(--font-display);font-size:11px;color:var(--amber);letter-spacing:0.1em;" id="dms-status-label">ARMED</div>
+              <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-top:2px;" id="dms-last-activity">Last activity: just now</div>
+            </div>
+          </div>
+          <div id="dms-toggle-btn" class="toggle-switch on" tabindex="0" role="switch" aria-checked="true" onclick="toggleDMSSetting()" onkeydown="if(event.key==='Enter'||event.key===' ')toggleDMSSetting()"></div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-bottom:5px;">
+            <span>INACTIVITY TIMER</span>
+            <span id="dms-bar-label">0 / <span id="dms-bar-max">10</span> min</span>
+          </div>
+          <div class="dms-sys-bar">
+            <div class="dms-sys-fill" id="dms-bar-fill" style="width:0%;"></div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px;">
+          <div>
+            <div style="font-family:var(--font-display);font-size:10px;color:var(--text-dim);letter-spacing:0.1em;margin-bottom:2px;">TRIGGER AFTER</div>
+            <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);">No activity detected</div>
+          </div>
+          <select id="dms-timeout-select" class="tactical-input" style="width:80px;font-size:12px;padding:6px 10px;" onchange="updateDMSTimeout()">
+            <option value="5">5 min</option>
+            <option value="10" selected>10 min</option>
+            <option value="15">15 min</option>
+            <option value="20">20 min</option>
+          </select>
+        </div>
+        <div style="background:rgba(255,59,48,0.06);border:1px solid rgba(255,59,48,0.2);border-radius:8px;padding:10px 12px;margin-bottom:4px;">
+          <div style="font-family:var(--font-display);font-size:9px;letter-spacing:0.15em;color:var(--red);margin-bottom:6px;">WHEN TRIGGERED:</div>
+          <div style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text-dim);line-height:1.6;">
+            <div>📡 <strong style="color:var(--amber);">SOS Beacon</strong> activates automatically</div>
+            <div>📞 <strong style="color:var(--amber);">Emergency call (102)</strong> opens automatically</div>
+            <div>⏱ <strong style="color:var(--amber);">10-second</strong> countdown — tap "I'M ALIVE" to cancel</div>
+          </div>
+        </div>
+
+        <!-- ── FIXED TEST BUTTON ── -->
+        <button id="dms-test-btn" type="button">
+          ⚡ TEST DEAD MAN'S SWITCH
+        </button>
+      </div>
+
+      <!-- SYSTEM CHECKLIST -->
+      <div class="tactical-box" style="padding:14px;margin-bottom:16px;border-radius:8px;">
+        <div class="section-header">SYSTEM STATUS</div>
+        <div style="display:flex;flex-direction:column;gap:8px;" id="sys-checklist"></div>
+      </div>
+
+      <!-- OPENAI KEY -->
+      <div class="tactical-box" style="padding:16px;margin-bottom:16px;border-radius:8px;">
+        <div class="section-header">AI CONNECTION — OPENAI</div>
+        <div class="api-key-box">
+          <div class="api-key-input-row">
+            <input id="openai-key-input" type="password" placeholder="sk-proj-... вставте ваш ключ сюди" autocomplete="off" spellcheck="false">
+            <button class="btn-save-key" onclick="saveOpenAIKey()">SAVE</button>
+          </div>
+          <div class="key-status-banner empty" id="key-status-banner">
+            <span id="key-status-icon">○</span>
+            <span id="key-status-text">Ключ не вказано — використовуються резервні відповіді</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;">
+          <div>
+            <div style="font-family:var(--font-display);font-size:9px;letter-spacing:0.1em;color:var(--text-dim);">MODEL</div>
+            <div style="font-family:var(--font-mono);font-size:11px;color:var(--amber);margin-top:2px;" id="openai-model-label">gpt-4o-mini</div>
+          </div>
+          <select id="openai-model-select" class="tactical-input" style="width:140px;font-size:11px;padding:5px 8px;" onchange="updateOpenAIModel()">
+            <option value="gpt-4o-mini" selected>gpt-4o-mini (fast)</option>
+            <option value="gpt-4o">gpt-4o (smart)</option>
+            <option value="gpt-4-turbo">gpt-4-turbo</option>
+            <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+          </select>
+        </div>
+        <button onclick="testOpenAIKey()" id="openai-test-btn" class="btn-amber" style="width:100%;font-size:10px;margin-bottom:8px;">⚡ TEST CONNECTION</button>
+        <div id="openai-test-result" style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);text-align:center;min-height:16px;"></div>
+        <div style="margin-top:14px;padding:10px 12px;background:rgba(255,149,0,0.04);border:1px solid rgba(255,149,0,0.15);border-radius:8px;">
+          <div style="font-family:var(--font-display);font-size:9px;letter-spacing:0.15em;color:var(--text-dim);margin-bottom:6px;">ЯК ОТРИМАТИ КЛЮЧ:</div>
+          <div style="font-size:11px;color:var(--text-dim);line-height:1.8;">
+            1. Відкрий <span style="color:var(--amber);font-family:var(--font-mono);">platform.openai.com</span><br>
+            2. API keys → Create new secret key<br>
+            3. Скопіюй та встав вище<br>
+            4. Натисни SAVE → TEST CONNECTION
+          </div>
+        </div>
+      </div>
+
+      <!-- OPENROUTER -->
+      <div class="tactical-box" style="padding:14px;margin-bottom:16px;border-radius:8px;">
+        <div class="section-header" style="cursor:pointer;" onclick="toggleORSection()">OPENROUTER (АЛЬТЕРНАТИВА) <span id="or-toggle-arrow" style="margin-left:auto;color:var(--amber);">▼</span></div>
+        <div id="or-section" style="display:none;">
+          <div style="margin-bottom:10px;">
+            <div class="api-key-input-row">
+              <input id="or-key-input" class="tactical-input" type="password" placeholder="sk-or-v1-..." autocomplete="off" style="font-family:var(--font-mono);font-size:12px;">
+              <button onclick="saveORKey()" class="btn-amber" style="flex-shrink:0;font-size:9px;padding:8px 10px;">SAVE</button>
+            </div>
+          </div>
+          <button onclick="testORKey()" id="or-test-btn" class="btn-amber" style="width:100%;font-size:10px;margin-bottom:8px;">⚡ TEST</button>
+          <div id="or-test-result" style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);text-align:center;"></div>
+        </div>
+      </div>
+
+      <!-- OFFLINE -->
+      <div class="tactical-box" style="padding:14px;border-radius:8px;">
+        <div class="section-header">OFFLINE CAPABILITY</div>
+        <div style="font-size:12px;color:var(--text-dim);line-height:1.7;">
+          <div style="margin-bottom:8px;">
+            <span class="tag tag-green" style="margin-right:6px;">AVAILABLE OFFLINE</span>
+            SOS Beacon, Medical ID, Breathing exercises, Coping protocols
+          </div>
+          <div>
+            <span class="tag tag-amber" style="margin-right:6px;">REQUIRES CONNECTION</span>
+            AI Psychologist, Live hazard feeds, Weather alerts
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav style="border-top:1px solid var(--border);background:rgba(0,0,0,0.95);backdrop-filter:blur(10px);padding:0;display:flex;" role="navigation">
+    <button class="nav-tab active" id="tab-home" onclick="switchTab('home')">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="3"/><path d="M10 2a8 8 0 100 16A8 8 0 0010 2z"/><path d="M10 7V2M10 18v-5M2 10H7M18 10h-5" stroke-width="1.5"/></svg>
+      SOS
+    </button>
+    <button class="nav-tab" id="tab-ai" onclick="switchTab('ai')">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      AI PSYCH
+    </button>
+    <button class="nav-tab" id="tab-hazard" onclick="switchTab('hazard')">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      HAZARDS
+    </button>
+    <button class="nav-tab" id="tab-sys" onclick="switchTab('sys')">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="16" height="10" rx="2"/><path d="M18 11h2"/><path d="M6 7V5a2 2 0 014 0v2"/></svg>
+      SYSTEMS
+    </button>
+  </nav>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let survivorData = {};
+let sosActive = false;
+let audioCtx = null;
+let sosOscillators = [];
+let sosPulseInterval = null;
+let waveAnimFrame = null;
+let breathRunning = false;
+let currentPhaseIdx = 0;
+let currentSecond = 4;
+let breathInterval = null;
+let chatHistory = [];
+
+let dmsEnabled = true;
+let dmsTimeoutMinutes = 10;
+let dmsTimer = null;
+let dmsCountdownTimer = null;
+let dmsCountdownVal = 10;
+let lastActivity = Date.now();
+let dmsBarInterval = null;
+
+// ============================================================
+// SYSTEM PROMPT
+// ============================================================
+const AI_SYSTEM_PROMPT = `You are Dr. Aria — crisis psychologist inside an emergency survival app. User may be trapped, injured, or in shock.
+
+RULES (non-negotiable):
+- 2–3 sentences MAX. No exceptions.
+- First sentence: name the emotion or situation directly. No "I understand" or "I hear you".
+- Second sentence: ONE concrete physical action (not advice, not explanation — action).
+- Third sentence (optional): one grounding question or next step.
+- NEVER: "it's okay", "don't worry", "I'm here for you", filler phrases, repeating previous advice.
+- Language: auto-detect and match (Ukrainian/Russian/English).
+- Injury/danger: prioritize first aid and energy conservation over psychology.
+- Vary structure every reply — never open the same way twice.
+- Build on conversation history. If you already gave breathing advice — don't repeat it.
+
+Survivor: Name=${survivorData?.name}, Blood=${survivorData?.blood}, Age=${survivorData?.age}, Allergies=${survivorData?.allergies}, Meds=${survivorData?.meds}
+
+RESPOND LIKE A FIELD MEDIC WHO ALSO KNOWS CBT. TERSE. DIRECT. ACTIONABLE.`;
+
+// ============================================================
+// INIT
+// ============================================================
+function initApp() {
+  survivorData = {
+    name:      document.getElementById('setup-name').value      || 'Unknown',
+    blood:     document.getElementById('setup-blood').value     || 'Unknown',
+    age:       document.getElementById('setup-age').value       || 'Unknown',
+    allergies: document.getElementById('setup-allergies').value || 'None reported',
+    meds:      document.getElementById('setup-meds').value      || 'None reported',
+  };
+  localStorage.setItem('underrubbl_survivor', JSON.stringify(survivorData));
+  startApp();
+}
+
+function startApp() {
+  document.getElementById('onboard-overlay').style.display = 'none';
+  const app = document.getElementById('app');
+  app.style.display = 'flex';
+  populateMedID();
+  initBattery();
+  initSignalSimulation();
+  populateSystemChecklist();
+  addInitialChatMessage();
+  fetchHazardData();
+  updateHazardTime();
+  initDeadManSwitch();
+  requestWakeLock();
+  setTimeout(initAPIKeyUI, 200);
+}
+
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('underrubbl_survivor');
+  if (saved) {
+    try { survivorData = JSON.parse(saved); startApp(); } catch(e) {}
+  }
+});
+
+function populateMedID() {
+  document.getElementById('med-name').textContent = survivorData.name;
+  document.getElementById('med-blood').textContent = survivorData.blood || '?';
+  document.getElementById('med-age').textContent = survivorData.age ? survivorData.age + ' yrs' : '—';
+  document.getElementById('med-allergies').textContent = survivorData.allergies || 'None reported';
+  document.getElementById('med-meds').textContent = survivorData.meds || 'None reported';
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(tab) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+// ============================================================
+// BATTERY
+// ============================================================
+async function initBattery() {
+  if ('getBattery' in navigator) {
+    try {
+      const battery = await navigator.getBattery();
+      updateBatteryUI(battery);
+      battery.addEventListener('levelchange',    () => updateBatteryUI(battery));
+      battery.addEventListener('chargingchange', () => updateBatteryUI(battery));
+      return;
+    } catch(e) {}
+  }
+  updateBatteryDisplay(0.72, false, null);
+}
+
+function updateBatteryUI(b) { updateBatteryDisplay(b.level, b.charging, b.dischargingTime); }
+
+function updateBatteryDisplay(lvl, charging, dischargingTime) {
+  const pct   = Math.round(lvl * 100);
+  const color = pct > 50 ? 'var(--green)' : pct > 20 ? 'var(--amber)' : 'var(--red)';
+  const mini  = document.getElementById('battery-mini');
+  const pctEl = document.getElementById('battery-pct');
+  if (mini)  { mini.style.width = pct + '%'; mini.style.background = color; }
+  if (pctEl) pctEl.textContent = pct + '%';
+  const ring = document.getElementById('battery-ring');
+  if (ring)  { ring.style.strokeDashoffset = 471.24 * (1 - lvl); ring.style.stroke = color; }
+  const largeEl = document.getElementById('battery-large');
+  if (largeEl) { largeEl.textContent = pct + '%'; largeEl.style.color = color; }
+  const stateEl = document.getElementById('battery-state');
+  if (stateEl) {
+    stateEl.textContent = pct <= 15 && !charging ? '⚠ CRITICAL' : charging ? '⚡ CHARGING' : '🔋 DISCHARGING';
+    stateEl.style.color = pct <= 15 && !charging ? 'var(--red)' : charging ? 'var(--green)' : 'var(--text-dim)';
+  }
+  const fillMain = document.getElementById('battery-fill-main');
+  if (fillMain) { fillMain.style.width = pct + '%'; fillMain.style.background = color; }
+  const cTxt = document.getElementById('battery-charging-txt');
+  if (cTxt) { cTxt.textContent = charging ? 'Yes ⚡' : 'No'; cTxt.style.color = charging ? 'var(--green)' : 'var(--text)'; }
+  const rEl = document.getElementById('battery-runtime');
+  const eEl = document.getElementById('battery-estimate');
+  if (dischargingTime && dischargingTime !== Infinity && !charging) {
+    const h = Math.floor(dischargingTime / 3600), m = Math.floor((dischargingTime % 3600) / 60);
+    if (rEl) rEl.textContent = `~${h}h ${m}m`;
+    if (eEl) eEl.textContent = `Estimated ${h}h ${m}m remaining`;
+  } else {
+    if (rEl) rEl.textContent = charging ? 'Charging' : 'N/A';
+    if (eEl) eEl.textContent = '';
+  }
+}
+
+// ============================================================
+// SIGNAL SIMULATION
+// ============================================================
+function initSignalSimulation() {
+  function update() {
+    const s = Math.floor(Math.random() * 4) + 1;
+    for (let i = 1; i <= 4; i++) document.getElementById('sig' + i).classList.toggle('active', i <= s);
+  }
+  update(); setInterval(update, 8000);
+}
+
+// ============================================================
+// SOS BEACON
+// ============================================================
+function toggleSOS() {
+  sosActive = !sosActive;
+  const btn = document.getElementById('sos-btn');
+  btn.classList.toggle('active', sosActive);
+  btn.setAttribute('aria-pressed', sosActive);
+  document.getElementById('sos-label').textContent = sosActive ? 'TRANSMITTING' : 'TAP TO ARM';
+  document.getElementById('beacon-mode').textContent = sosActive ? 'MODE: ACTIVE' : 'MODE: STANDBY';
+  if (sosActive) { startAcousticBeacon(); startWaveAnimation(); }
+  else { stopAcousticBeacon(); stopWaveAnimation(); }
+}
+
+function getAudioContext() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+const SOS_PATTERN = [200,200,200,200,200,600,600,200,600,200,600,600,200,200,200,200,200,3000];
+
+function startAcousticBeacon() { stopAcousticBeacon(); playSOSPattern(0); }
+
+function playSOSPattern(idx) {
+  if (!sosActive) return;
+  const ctx = getAudioContext();
+  const isDit = idx % 2 === 0;
+  const dur   = SOS_PATTERN[idx];
+  if (isDit) {
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine'; osc.frequency.setValueAtTime(4000, ctx.currentTime);
+    gain.gain.setValueAtTime(0.5, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + dur / 1000 - 0.01);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + dur / 1000);
+    sosOscillators.push(osc);
+  }
+  sosPulseInterval = setTimeout(() => playSOSPattern((idx + 1) % SOS_PATTERN.length), dur);
+}
+
+function stopAcousticBeacon() {
+  clearTimeout(sosPulseInterval);
+  sosOscillators.forEach(o => { try { o.stop(); } catch(e){} });
+  sosOscillators = [];
+}
+
+function startWaveAnimation() {
+  let t = 0;
+  function animate() {
+    for (let i = 0; i <= 11; i++) {
+      const el = document.getElementById('wb' + i);
+      if (el) el.style.height = (Math.abs(Math.sin(t + i * 0.5)) * 28 + 4) + 'px';
+    }
+    t += 0.15; waveAnimFrame = requestAnimationFrame(animate);
+  }
+  waveAnimFrame = requestAnimationFrame(animate);
+}
+
+function stopWaveAnimation() {
+  if (waveAnimFrame) cancelAnimationFrame(waveAnimFrame);
+  for (let i = 0; i <= 11; i++) { const el = document.getElementById('wb' + i); if (el) el.style.height = '4px'; }
+}
+
+// ============================================================
+// DEAD MAN'S SWITCH — FIXED
+// ============================================================
+function initDeadManSwitch() {
+  // Wire up the cancel button inside overlay
+  document.getElementById('dms-cancel-btn').addEventListener('click', resetDeadManSwitch);
+
+  // Wire up the TEST button — use addEventListener so it can't be overridden by inline onclick
+  const testBtn = document.getElementById('dms-test-btn');
+  if (testBtn) {
+    testBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      triggerDMSWarning();
+    });
+  }
+
+  ['touchstart','touchend','click','keydown','scroll'].forEach(evt =>
+    document.addEventListener(evt, onUserActivity, { passive: true })
+  );
+  scheduleDMS();
+  startDMSBar();
+}
+
+function onUserActivity(e) {
+  // Don't reset timer if the DMS overlay is visible (user must click the cancel button)
+  if (document.getElementById('dms-overlay').classList.contains('visible')) return;
+  lastActivity = Date.now();
+  scheduleDMS();
+}
+
+function scheduleDMS() {
+  clearTimeout(dmsTimer);
+  if (!dmsEnabled) return;
+  dmsTimer = setTimeout(triggerDMSWarning, dmsTimeoutMinutes * 60 * 1000);
+}
+
+function startDMSBar() {
+  clearInterval(dmsBarInterval);
+  dmsBarInterval = setInterval(() => {
+    const elapsed = (Date.now() - lastActivity) / 1000;
+    const total   = dmsTimeoutMinutes * 60;
+    const pct     = Math.min(100, (elapsed / total) * 100);
+    const fill  = document.getElementById('dms-bar-fill');
+    const label = document.getElementById('dms-bar-label');
+    const actEl = document.getElementById('dms-last-activity');
+    if (fill)  { fill.style.width = pct + '%'; fill.style.background = pct > 80 ? 'var(--red)' : pct > 50 ? 'var(--amber)' : 'var(--green)'; }
+    const em = Math.floor(elapsed / 60), es = Math.floor(elapsed % 60);
+    if (label) label.innerHTML = `${em}:${String(es).padStart(2,'0')} / ${dmsTimeoutMinutes} min`;
+    document.getElementById('dms-bar-max').textContent = dmsTimeoutMinutes;
+    const secs = Math.round(elapsed);
+    if (actEl) actEl.textContent = secs < 60 ? `Last activity: ${secs}s ago` : `Last activity: ${Math.round(secs/60)}m ago`;
+  }, 1000);
+}
+
+function triggerDMSWarning() {
+  if (!dmsEnabled) return;
+  clearInterval(dmsCountdownTimer); // clear any existing countdown
+  dmsCountdownVal = 10;
+  document.getElementById('dms-countdown').textContent = dmsCountdownVal;
+  document.getElementById('dms-timeout-display').textContent = dmsTimeoutMinutes;
+  document.getElementById('dms-sms-status').textContent = '';
+  // Show overlay
+  document.getElementById('dms-overlay').classList.add('visible');
+
+  dmsCountdownTimer = setInterval(() => {
+    dmsCountdownVal--;
+    const el = document.getElementById('dms-countdown');
+    if (el) el.textContent = dmsCountdownVal;
+    if (dmsCountdownVal <= 0) {
+      clearInterval(dmsCountdownTimer);
+      activateDMS();
+    }
+  }, 1000);
+}
+
+function activateDMS() {
+  if (!sosActive) toggleSOS();
+  const smsEl = document.getElementById('dms-sms-status');
+  if (smsEl) smsEl.textContent = '📞 Opening emergency call (102)...';
+  setTimeout(() => { window.location.href = 'tel:102'; }, 1200);
+}
+
+function resetDeadManSwitch() {
+  clearInterval(dmsCountdownTimer);
+  document.getElementById('dms-overlay').classList.remove('visible');
+  lastActivity = Date.now();
+  scheduleDMS();
+}
+
+function toggleDMSSetting() {
+  dmsEnabled = !dmsEnabled;
+  const btn = document.getElementById('dms-toggle-btn');
+  const dot = document.getElementById('dms-dot');
+  const lbl = document.getElementById('dms-status-label');
+  if (btn) { btn.classList.toggle('on', dmsEnabled); btn.setAttribute('aria-checked', dmsEnabled); }
+  if (dot) { dot.style.background = dmsEnabled ? 'var(--green)' : 'var(--amber)'; dot.style.boxShadow = dmsEnabled ? '0 0 6px var(--green)' : '0 0 6px var(--amber)'; }
+  if (lbl) lbl.textContent = dmsEnabled ? 'ARMED' : 'DISABLED';
+  if (dmsEnabled) scheduleDMS(); else clearTimeout(dmsTimer);
+  populateSystemChecklist();
+}
+
+function updateDMSTimeout() {
+  dmsTimeoutMinutes = parseInt(document.getElementById('dms-timeout-select').value);
+  scheduleDMS(); startDMSBar();
+}
+
+// ============================================================
+// SYSTEM CHECKLIST
+// ============================================================
+function populateSystemChecklist() {
+  const oaiKey = localStorage.getItem('underrubbl_openai_key');
+  const orKey  = localStorage.getItem('underrubbl_ds_key');
+  const hasKey = !!(oaiKey || orKey);
+  const checks = [
+    { name: 'ACOUSTIC BEACON',  status: 'ok',                                                                                    note: 'Ready — 4000Hz SOS' },
+    { name: 'MEDICAL ID',       status: (survivorData.blood && survivorData.blood !== 'Unknown') ? 'ok' : 'warn',                note: (survivorData.blood && survivorData.blood !== 'Unknown') ? 'Configured' : 'Incomplete' },
+    { name: 'AI PSYCHOLOGIST',  status: hasKey ? 'ok' : 'warn',                                                                  note: hasKey ? 'OpenAI connected' : 'No key — fallback mode' },
+    { name: 'HAZARD MONITORING',status: 'ok',                                                                                    note: 'USGS feed active' },
+    { name: 'WEB AUDIO API',    status: (window.AudioContext || window.webkitAudioContext) ? 'ok' : 'danger',                    note: (window.AudioContext || window.webkitAudioContext) ? 'Available' : 'Not supported' },
+    { name: 'BATTERY API',      status: 'getBattery' in navigator ? 'ok' : 'warn',                                              note: 'getBattery' in navigator ? 'Native' : 'Simulated' },
+    { name: 'AUTO-SOS (DMS)',   status: dmsEnabled ? 'ok' : 'warn',                                                             note: dmsEnabled ? `Armed — ${dmsTimeoutMinutes}m timeout` : 'Disabled' },
+  ];
+  const container = document.getElementById('sys-checklist');
+  if (!container) return;
+  container.innerHTML = checks.map(c => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="status-dot ${c.status}"></div>
+        <span style="font-family:var(--font-display);font-size:10px;letter-spacing:0.1em;">${c.name}</span>
+      </div>
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);">${c.note}</span>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// HAZARD MONITORING
+// ============================================================
+async function fetchHazardData() { await fetchEarthquakes(); generateWeatherThreats(); }
+
+async function fetchEarthquakes() {
+  const container = document.getElementById('quake-list');
+  try {
+    const res  = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.geojson');
+    const data = await res.json();
+    const quakes = data.features.slice(0, 5);
+    if (quakes.length === 0) {
+      container.innerHTML = `<div class="alert-card safe"><div style="font-family:var(--font-display);font-size:11px;color:var(--green);letter-spacing:0.1em;">NO SIGNIFICANT EVENTS</div><div style="font-size:12px;color:var(--text-dim);margin-top:4px;">No significant earthquakes in past 7 days (USGS)</div></div>`;
+    } else {
+      container.innerHTML = quakes.map(q => {
+        const mag = q.properties.mag, place = q.properties.place;
+        const time = new Date(q.properties.time).toLocaleString();
+        const sev  = mag >= 6.5 ? 'danger' : mag >= 5.5 ? 'moderate' : 'safe';
+        const lab  = mag >= 6.5 ? 'MAJOR' : mag >= 5.5 ? 'MODERATE' : 'MINOR';
+        return `<div class="alert-card ${sev}"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span class="tag tag-${sev==='danger'?'red':sev==='moderate'?'amber':'green'}">${lab}</span><span style="font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--amber);">M${mag.toFixed(1)}</span></div><div style="font-size:12px;color:var(--text);margin-bottom:2px;">${place}</div><div style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);">${time}</div></div>`;
+      }).join('');
+    }
+    document.getElementById('quake-updated').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+  } catch(e) {
+    container.innerHTML = `<div class="alert-card moderate"><div style="font-family:var(--font-display);font-size:11px;color:var(--amber);">USGS FEED UNAVAILABLE</div><div style="font-size:12px;color:var(--text-dim);margin-top:4px;">Check connection.</div></div>`;
+    document.getElementById('quake-updated').textContent = 'USGS unreachable';
+  }
+}
+
+function generateWeatherThreats() {
+  const threats = [
+    { type: 'STRUCTURAL FIRE RISK', icon: '🔥', level: 'danger',   note: 'Gas line damage likely in collapse zones. No open flames.', time: 'Ongoing' },
+    { type: 'DUST & PARTICULATE',  icon: '🌫', level: 'moderate', note: 'Concrete dust hazard. Cover nose/mouth with fabric.',        time: 'Ongoing' },
+    { type: 'RAIN FORECAST',       icon: '🌧', level: 'moderate', note: 'Rain expected in 4-6 hours. May assist acoustic signals.',   time: 'In ~4hrs' },
+  ];
+  document.getElementById('weather-list').innerHTML = threats.map(t => `
+    <div class="alert-card ${t.level}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <span style="font-size:16px;">${t.icon}</span>
+        <span class="tag tag-${t.level==='danger'?'red':'amber'}">${t.type}</span>
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);margin-left:auto;">${t.time}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-dim);">${t.note}</div>
+    </div>
+  `).join('');
+}
+
+function refreshHazards() {
+  document.getElementById('quake-list').innerHTML = '<div class="shimmer" style="height:60px;"></div>';
+  setTimeout(fetchHazardData, 500);
+}
+
+function updateHazardTime() {
+  document.getElementById('hazard-time').textContent = 'Monitoring since: ' + new Date().toLocaleTimeString();
+}
+
+// ============================================================
+// AI CHAT
+// ============================================================
+function addInitialChatMessage() {
+  const name = (survivorData.name && survivorData.name !== 'Unknown') ? survivorData.name : 'Survivor';
+  appendAIMessage(`${name}, I'm Dr. Aria. I'm here with you right now. Take one slow breath — in through your nose, out through your mouth. What's your most immediate need right now?`);
+}
+
+function appendAIMessage(text) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'chat-bubble ai';
+  div.textContent = text;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  chatHistory.push({ role: 'assistant', content: text });
+  speakText(text);
+}
+
+function appendUserMessage(text) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'chat-bubble user';
+  div.textContent = text;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  chatHistory.push({ role: 'user', content: text });
+}
+
+function speakText(text) {
+  try {
+    if (!('speechSynthesis' in window) || !text) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 0.92; utter.pitch = 1.0;
+    const lang = navigator.language || '';
+    if (lang.startsWith('uk')) utter.lang = 'uk-UA';
+    else if (lang.startsWith('ru')) utter.lang = 'ru-RU';
+    else utter.lang = 'en-US';
+    window.speechSynthesis.speak(utter);
+  } catch(e) {}
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  await processMessage(msg);
+}
+
+async function sendQuickMsg(msg) {
+  switchTab('ai');
+  await processMessage(msg);
+}
+
+async function processMessage(msg) {
+  appendUserMessage(msg);
+  document.getElementById('ai-loading').style.display = 'block';
+  document.getElementById('chat-messages').scrollTop = 9999;
+
+  const oaiKey = localStorage.getItem('underrubbl_openai_key');
+  const orKey  = localStorage.getItem('underrubbl_ds_key');
+
+  try {
+    let reply = '';
+    if (oaiKey) {
+      reply = await callOpenAI(oaiKey);
+    } else if (orKey) {
+      reply = await callOpenRouter(orKey);
+    }
+    document.getElementById('ai-loading').style.display = 'none';
+    if (reply) { appendAIMessage(reply); return; }
+  } catch(e) {
+    console.warn('AI call failed:', e.message);
+  }
+
+  document.getElementById('ai-loading').style.display = 'none';
+  appendAIMessage(getContextualFallback(msg));
+}
+
+async function callOpenAI(key) {
+  const model  = localStorage.getItem('underrubbl_openai_model') || 'gpt-4o-mini';
+  const apiKey = key || localStorage.getItem('underrubbl_openai_key');
+  if (!apiKey) throw new Error('No OpenAI key');
+
+  const systemWithContext = AI_SYSTEM_PROMPT +
+    `\n\nSurvivor profile: Name=${survivorData.name || 'Unknown'}, Blood=${survivorData.blood || 'Unknown'}, Age=${survivorData.age || 'Unknown'}, Allergies=${survivorData.allergies || 'None'}, Meds=${survivorData.meds || 'None'}.`;
+
+  const messages = chatHistory.slice(-20);
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+    body: JSON.stringify({
+      model,
+      max_tokens: 300,
+      temperature: 1.0,
+      presence_penalty: 0.8,
+      frequency_penalty: 0.6,
+      messages: [
+        { role: 'system', content: systemWithContext },
+        ...messages
+      ]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err.error && err.error.message) ? err.error.message : 'API error ' + res.status);
+  }
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+
+async function callOpenRouter(key) {
+  const systemWithContext = AI_SYSTEM_PROMPT +
+    `\n\nSurvivor profile: Name=${survivorData.name || 'Unknown'}, Blood=${survivorData.blood || 'Unknown'}, Age=${survivorData.age || 'Unknown'}.`;
+  const messages = chatHistory.slice(-20);
+
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+    body: JSON.stringify({
+      model: 'openai/gpt-4o-mini',
+      max_tokens: 300,
+      temperature: 1.0,
+      presence_penalty: 0.8,
+      frequency_penalty: 0.6,
+      messages: [
+        { role: 'system', content: systemWithContext },
+        ...messages
+      ]
+    })
+  });
+  if (!res.ok) throw new Error('API ' + res.status);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+
+function getContextualFallback(msg) {
+  const m = (msg || '').toLowerCase();
+  if (m.includes('panic') || m.includes('scare') || m.includes('afraid') || m.includes('паніку') || m.includes('страх'))
+    return "Your fear makes complete sense right now. Place your hand on your chest — feel it rise and fall. Count to 4 while you breathe in, slowly.";
+  if (m.includes('pain') || m.includes('hurt') || m.includes('injur') || m.includes('біль'))
+    return "I hear you're in pain. Rate it 1-10 out loud, then press firmly on the most painful spot with any fabric you can find and hold steady pressure.";
+  if (m.includes('breath') || m.includes('breathe') || m.includes('air') || m.includes('дих'))
+    return "You have enough air. Put one hand on your belly — push it OUT as you breathe in. That engages your diaphragm and slows your nervous system down.";
+  if (m.includes('help') || m.includes('rescue') || m.includes('save'))
+    return "Rescuers are moving toward you right now. Save your voice — instead, tap rhythmically on any metal pipe you can reach: three short, three long, three short.";
+  if (m.includes('water') || m.includes('thirst'))
+    return "The body is remarkably resilient — 3 days without water is survivable. Breathe slowly through your nose; it reduces moisture loss significantly.";
+  if (m.includes('hopeless') || m.includes('give up') || m.includes('alone') || m.includes('надія'))
+    return "You reached out — that means part of you is still fighting. Think of one person waiting for you on the outside. Hold that image. Tell me their name.";
+  const defaults = [
+    "Right now, this second — what does the air around you feel like? Describe it to me.",
+    "You're doing better than you realize. Place both palms flat on something solid near you.",
+    "Stay still and conserve every bit of energy. What's the one thing that worries you most?",
+    "I'm with you. When did you last hear any sound from outside?",
+  ];
+  return defaults[Math.floor(Math.random() * defaults.length)];
+}
+
+// ============================================================
+// BOX BREATHING
+// ============================================================
+const BREATH_PHASES = [
+  { name: 'INHALE', class: 'inhale', label: 'IN',   seconds: 4 },
+  { name: 'HOLD',   class: 'hold',   label: 'HOLD', seconds: 4 },
+  { name: 'EXHALE', class: 'exhale', label: 'OUT',  seconds: 4 },
+  { name: 'HOLD',   class: 'hold',   label: 'HOLD', seconds: 4 },
+];
+
+function startBreathingExercise() {
+  document.getElementById('breath-widget').style.display = 'block';
+  document.getElementById('breath-widget').scrollIntoView({ behavior: 'smooth' });
+}
+
+function toggleBreathing() {
+  breathRunning = !breathRunning;
+  document.getElementById('breath-toggle-btn').textContent = breathRunning ? '⏸ PAUSE' : '▶ START';
+  if (breathRunning) { currentPhaseIdx = 0; runBreathPhase(); }
+  else clearInterval(breathInterval);
+}
+
+function runBreathPhase() {
+  clearInterval(breathInterval);
+  const phase = BREATH_PHASES[currentPhaseIdx];
+  const circle = document.getElementById('breath-circle');
+  circle.className = '';
+  setTimeout(() => circle.classList.add(phase.class), 50);
+  document.getElementById('breath-phase').textContent = phase.name;
+  document.getElementById('breath-label').textContent = phase.label;
+  currentSecond = phase.seconds;
+  document.getElementById('breath-count').textContent = currentSecond;
+  breathInterval = setInterval(() => {
+    if (!breathRunning) return;
+    currentSecond--;
+    document.getElementById('breath-count').textContent = currentSecond;
+    if (currentSecond <= 0) {
+      clearInterval(breathInterval);
+      currentPhaseIdx = (currentPhaseIdx + 1) % BREATH_PHASES.length;
+      runBreathPhase();
+    }
+  }, 1000);
+}
+
+// ============================================================
+// VOICE INPUT
+// ============================================================
+let voiceRecognition = null;
+let voiceListening = false;
+let voiceWaveAnim = null;
+
+function toggleVoiceInput() {
+  if (voiceListening) { stopVoiceInput(); return; }
+  startVoiceInput();
+}
+
+function startVoiceInput() {
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) { alert('Speech recognition not supported. Use Chrome or Edge.'); return; }
+  if (!voiceRecognition) {
+    voiceRecognition = new SpeechRec();
+    voiceRecognition.lang = 'uk-UA';
+    voiceRecognition.interimResults = true;
+    voiceRecognition.maxAlternatives = 1;
+    voiceRecognition.continuous = false;
+  }
+  voiceRecognition.onstart = () => {
+    voiceListening = true;
+    const btn = document.getElementById('voice-btn');
+    if (btn) { btn.textContent = '🎙'; btn.style.background = 'rgba(255,149,0,0.15)'; }
+    const bar = document.getElementById('voice-status-bar');
+    if (bar) bar.style.display = 'flex';
+    startVoiceWave();
+  };
+  voiceRecognition.onresult = (event) => {
+    let t = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) t += event.results[i][0].transcript;
+    const input = document.getElementById('chat-input');
+    if (input && t.trim()) { input.value = t.trim(); document.getElementById('voice-status-txt').textContent = t.trim().substring(0, 40); }
+  };
+  voiceRecognition.onerror = () => { stopVoiceInput(); };
+  voiceRecognition.onend = () => {
+    voiceListening = false;
+    const btn = document.getElementById('voice-btn');
+    if (btn) { btn.textContent = '🎤'; btn.style.background = ''; }
+    const bar = document.getElementById('voice-status-bar');
+    if (bar) bar.style.display = 'none';
+    stopVoiceWave();
+    const input = document.getElementById('chat-input');
+    if (input && input.value.trim()) sendChat();
+  };
+  try { voiceRecognition.start(); } catch(e) { stopVoiceInput(); }
+}
+
+function stopVoiceInput() {
+  if (voiceRecognition) { try { voiceRecognition.stop(); } catch(e){} }
+  voiceListening = false;
+  const btn = document.getElementById('voice-btn');
+  if (btn) { btn.textContent = '🎤'; btn.style.background = ''; }
+  const bar = document.getElementById('voice-status-bar');
+  if (bar) bar.style.display = 'none';
+  stopVoiceWave();
+}
+
+function startVoiceWave() {
+  let t = 0;
+  voiceWaveAnim = setInterval(() => {
+    for (let i = 0; i < 5; i++) {
+      const el = document.getElementById('vw' + i);
+      if (el) el.style.height = (Math.abs(Math.sin(t + i * 0.6)) * 16 + 4) + 'px';
+    }
+    t += 0.2;
+  }, 80);
+}
+
+function stopVoiceWave() {
+  clearInterval(voiceWaveAnim);
+  for (let i = 0; i < 5; i++) { const el = document.getElementById('vw' + i); if (el) el.style.height = '6px'; }
+}
+
+// ============================================================
+// API KEY MANAGEMENT
+// ============================================================
+function toggleORSection() {
+  const sec = document.getElementById('or-section');
+  const arrow = document.getElementById('or-toggle-arrow');
+  const isHidden = sec.style.display === 'none';
+  sec.style.display = isHidden ? 'block' : 'none';
+  arrow.textContent = isHidden ? '▲' : '▼';
+}
+
+function saveOpenAIKey() {
+  const val = document.getElementById('openai-key-input').value.trim();
+  if (!val.startsWith('sk-')) {
+    setKeyBanner('error', '⚠ Невалідний ключ — має починатись з sk-');
+    return;
+  }
+  localStorage.setItem('underrubbl_openai_key', val);
+  document.getElementById('openai-key-input').value = '';
+  document.getElementById('openai-key-input').placeholder = '●●●● збережено — вставте щоб замінити';
+  setKeyBanner('saved', '✅ Ключ збережено локально на пристрої');
+  populateSystemChecklist();
+}
+
+function updateOpenAIModel() {
+  const model = document.getElementById('openai-model-select').value;
+  localStorage.setItem('underrubbl_openai_model', model);
+  document.getElementById('openai-model-label').textContent = model;
+}
+
+async function testOpenAIKey() {
+  const key = localStorage.getItem('underrubbl_openai_key');
+  if (!key) { document.getElementById('openai-test-result').textContent = '⚠ Спочатку збережіть ключ'; return; }
+  const btn = document.getElementById('openai-test-btn');
+  btn.textContent = '⏳ TESTING...'; btn.disabled = true;
+  try {
+    const model = localStorage.getItem('underrubbl_openai_model') || 'gpt-4o-mini';
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+      body: JSON.stringify({
+        model, max_tokens: 20, temperature: 0,
+        messages: [{ role: 'user', content: 'Reply with exactly: ONLINE' }]
+      })
+    });
+    if (!res.ok) { const e = await res.json().catch(()=>{}); throw new Error(e?.error?.message || 'HTTP ' + res.status); }
+    const data = await res.json();
+    const reply = data.choices?.[0]?.message?.content || '';
+    document.getElementById('openai-test-result').style.color = 'var(--green)';
+    document.getElementById('openai-test-result').textContent = '✅ З\'єднання OK: ' + reply.substring(0, 40);
+    setKeyBanner('saved', '✅ OpenAI підключено — ' + (localStorage.getItem('underrubbl_openai_model') || 'gpt-4o-mini'));
+    populateSystemChecklist();
+  } catch(e) {
+    document.getElementById('openai-test-result').style.color = 'var(--red)';
+    document.getElementById('openai-test-result').textContent = '❌ ' + e.message;
+  }
+  btn.textContent = '⚡ TEST CONNECTION'; btn.disabled = false;
+}
+
+function setKeyBanner(type, text) {
+  const banner = document.getElementById('key-status-banner');
+  const icon   = document.getElementById('key-status-icon');
+  const txt    = document.getElementById('key-status-text');
+  banner.className = 'key-status-banner ' + type;
+  icon.textContent = type === 'saved' ? '●' : type === 'error' ? '✕' : '○';
+  txt.textContent  = text;
+}
+
+function saveORKey() {
+  const val = document.getElementById('or-key-input').value.trim();
+  if (!val.startsWith('sk-')) { document.getElementById('or-test-result').textContent = '⚠ Invalid key format'; return; }
+  localStorage.setItem('underrubbl_ds_key', val);
+  document.getElementById('or-key-input').value = '';
+  document.getElementById('or-key-input').placeholder = '●●●● saved — paste to replace';
+  document.getElementById('or-test-result').textContent = '✅ OpenRouter key saved';
+  populateSystemChecklist();
+}
+
+async function testORKey() {
+  const key = localStorage.getItem('underrubbl_ds_key');
+  if (!key) { document.getElementById('or-test-result').textContent = '⚠ Save key first'; return; }
+  const btn = document.getElementById('or-test-btn');
+  btn.textContent = '⏳ TESTING...'; btn.disabled = true;
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+      body: JSON.stringify({ model: 'openai/gpt-4o-mini', max_tokens: 20, messages: [{ role: 'user', content: 'Reply: ONLINE' }] })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    document.getElementById('or-test-result').style.color = 'var(--green)';
+    document.getElementById('or-test-result').textContent = '✅ OpenRouter OK: ' + (data.choices?.[0]?.message?.content || '').substring(0,30);
+  } catch(e) {
+    document.getElementById('or-test-result').style.color = 'var(--red)';
+    document.getElementById('or-test-result').textContent = '❌ ' + e.message;
+  }
+  btn.textContent = '⚡ TEST'; btn.disabled = false;
+}
+
+function initAPIKeyUI() {
+  const savedModel = localStorage.getItem('underrubbl_openai_model') || 'gpt-4o-mini';
+  const oaiKey = localStorage.getItem('underrubbl_openai_key');
+  const orKey  = localStorage.getItem('underrubbl_ds_key');
+
+  const modelSel = document.getElementById('openai-model-select');
+  if (modelSel) modelSel.value = savedModel;
+  const modelLabel = document.getElementById('openai-model-label');
+  if (modelLabel) modelLabel.textContent = savedModel;
+
+  if (oaiKey) {
+    document.getElementById('openai-key-input').placeholder = '●●●● збережено — вставте щоб замінити';
+    setKeyBanner('saved', '✅ OpenAI ключ активний — ' + savedModel);
+  } else if (orKey) {
+    document.getElementById('or-key-input').placeholder = '●●●● saved — paste to replace';
+    setKeyBanner('saved', '✅ OpenRouter ключ активний');
+  } else {
+    localStorage.setItem('underrubbl_ds_key', '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');
+    setKeyBanner('empty', 'Резервний ключ активний — введіть свій OpenAI ключ вище');
+  }
+  populateSystemChecklist();
+}
+
+// ============================================================
+// WAKE LOCK + ONLINE/OFFLINE
+// ============================================================
+async function requestWakeLock() {
+  if ('wakeLock' in navigator) { try { await navigator.wakeLock.request('screen'); } catch(e) {} }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') requestWakeLock(); });
+
+window.addEventListener('online',  () => { document.getElementById('sys-status').className = 'status-dot ok';   document.getElementById('sys-status-txt').textContent = 'ONLINE'; });
+window.addEventListener('offline', () => { document.getElementById('sys-status').className = 'status-dot warn'; document.getElementById('sys-status-txt').textContent = 'OFFLINE'; });
+if (!navigator.onLine) { document.getElementById('sys-status').className = 'status-dot warn'; document.getElementById('sys-status-txt').textContent = 'OFFLINE'; }
+</script>
+</body>
+</html>
